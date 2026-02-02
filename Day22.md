@@ -2,61 +2,83 @@
 
 ---
 
-## 📝 Task Details 
+## 📝 Task 
 
-The Nautilus DevOps team needs to set up a new EC2 instance that can be accessed securely from their landing host (**aws-client**).
+The Nautilus DevOps team needs to set up a new EC2 instance that can be accessed securely from their landing host (**aws-client**). The instance should be of type **t2.micro** and named **datacenter-ec2**.
 
-### Requirements:
+A new SSH key with name **id_rsa** should be created on the **aws-client** host under the **/root/.ssh/** folder, if it doesn't already exist.
 
-* Create an EC2 instance named **datacenter-ec2**
-* Instance type must be **t2.micro**
-* Create a new SSH key named **id_rsa** on **aws-client** under:
-
-```
-/root/.ssh/
-```
-
-* Add the public key to the **root user’s authorized_keys** on the EC2 instance
-* Enable **passwordless SSH access** from aws-client
+This key should then be added to the **root user's authorised keys** on the EC2 instance, allowing **passwordless SSH access** from the aws-client host.
 
 ---
 
-# 🧠 Concept (Short & Clear)
+# 🧠 WHY this is required
 
-SSH keys allow secure login without passwords using:
+### Problems with password login:
 
-🔑 Private key → client
-🔓 Public key → server
+❌ Easily hacked
+❌ Not automation friendly
+❌ Not industry standard
 
-Stored in:
+### SSH keys provide:
 
-```
-/root/.ssh/authorized_keys
-```
+✅ High security
+✅ Automation access
+✅ No password storage
+
+Used in:
+
+* Jump servers
+* CI/CD pipelines
+* Production servers
 
 ---
 
-# 🚀 STEP 1: Launch EC2 Instance (AWS Console)
+# 🕒 WHEN this is used in real world
 
-### Go to:
+✔ Connecting DevOps servers to cloud VMs
+✔ Ansible automation
+✔ Jenkins deployments
+✔ Backup servers
+
+---
+
+# ⚙️ HOW SSH key auth works (simple)
+
+```
+Client (aws-client) holds private key
+Server (EC2) stores public key
+
+If keys match → access allowed
+```
+
+Files:
+
+| File            | Purpose             |
+| --------------- | ------------------- |
+| id_rsa          | private key         |
+| id_rsa.pub      | public key          |
+| authorized_keys | allowed public keys |
+
+---
+
+# 🚀 STEP 1 — Launch EC2 Instance (Console)
 
 EC2 → Launch Instance
 
-### Configure:
+| Setting        | Value          |
+| -------------- | -------------- |
+| Name           | datacenter-ec2 |
+| AMI            | Amazon Linux   |
+| Type           | t2.micro       |
+| Security Group | Allow SSH (22) |
+| Key pair       | None           |
 
-| Setting        | Value               |
-| -------------- | ------------------- |
-| Name           | datacenter-ec2      |
-| AMI            | Amazon Linux 2023   |
-| Instance type  | t2.micro            |
-| Security Group | Allow SSH (port 22) |
-| Key pair       | None required       |
-
-Click **Launch**
+Launch instance.
 
 ---
 
-# 🔐 STEP 2: Generate SSH Key on aws-client
+# 🔐 STEP 2 — Create SSH key on aws-client
 
 ```bash
 cd /root/.ssh
@@ -65,13 +87,7 @@ ssh-keygen
 
 Press ENTER for all prompts.
 
-Verify:
-
-```bash
-ls
-```
-
-You should see:
+Creates:
 
 ```
 id_rsa
@@ -80,30 +96,29 @@ id_rsa.pub
 
 ---
 
-# 📄 STEP 3: Copy Public Key
+# 📄 STEP 3 — Copy public key
 
 ```bash
 cat id_rsa.pub
 ```
 
-Copy the output.
+Copy output.
 
 ---
 
-# 🖥️ STEP 4: Login to EC2 Instance
+# 🖥️ STEP 4 — Login to EC2 (initial)
 
 ```bash
-ssh root@<EC2_PUBLIC_IP>
+ssh root@EC2_PUBLIC_IP
 ```
 
-(or login as ec2-user then sudo -i)
+(or `ec2-user` then `sudo -i`)
 
 ---
 
-# 📂 STEP 5: Add Key to authorized_keys
+# 📂 STEP 5 — Add key to authorized_keys
 
 ```bash
-sudo -i
 cd /root/.ssh
 vim authorized_keys
 ```
@@ -112,50 +127,52 @@ Paste public key → save.
 
 ---
 
-# 🔁 STEP 6: Test Passwordless SSH
+# 🔁 STEP 6 — Test passwordless SSH
 
 From aws-client:
 
 ```bash
-ssh root@<EC2_PUBLIC_IP>
+ssh root@EC2_PUBLIC_IP
 ```
 
-✅ Logs in without password
+✅ Should connect directly.
 
 ---
 
-# ✅ Verification Checklist
+# ✅ Verification
 
-✔ EC2 running
-✔ SSH allowed in SG
-✔ id_rsa created on aws-client
-✔ public key in authorized_keys
-✔ SSH connects directly
+✔ EC2 reachable
+✔ SSH port open
+✔ id_rsa exists
+✔ authorized_keys updated
+✔ No password prompt
 
 ---
 
-# 🎯 Common Mistakes
+# ❗ Common mistakes
 
 ❌ Using instance ID instead of IP
-❌ Forgetting port 22 rule
-❌ Adding private key instead of public key
-❌ Wrong permissions
+❌ Private key pasted instead of public
+❌ Port 22 closed
+❌ Wrong user
 
 ---
 
-# 📌 Quick Revision Flow
+# 📌 Quick revision flow
 
 ```
 Launch EC2
-↓
-ssh-keygen on aws-client
-↓
-copy id_rsa.pub
-↓
-paste into /root/.ssh/authorized_keys on EC2
-↓
-SSH works
+→ ssh-keygen
+→ copy id_rsa.pub
+→ paste into authorized_keys
+→ ssh works
 ```
+
+---
+
+# 💬 Interview line (perfect)
+
+“SSH key-based authentication allows secure, passwordless access by matching client private key with server stored public key.”
 
 ---
 
